@@ -23,7 +23,7 @@ module Poloniex
   #   end
   # end
 
-  def initialize(key, secret)
+  def initialize(key:, secret:)
     @key = key
     @secret = secret
   end
