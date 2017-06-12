@@ -5,159 +5,164 @@ require 'addressable/uri'
 
 module Poloniex
 
-  class << self
-    attr_accessor :configuration
+  # class << self
+  #   attr_accessor :configuration
+  # end
+
+  # def setup
+  #   @configuration ||= Configuration.new
+  #   yield( configuration )
+  # end
+
+  # class Configuration
+  #   attr_accessor :key, :secret
+
+  #   def intialize
+  #     @key    = ''
+  #     @secret = ''
+  #   end
+  # end
+
+  def initialize(key, secret)
+    @key = key
+    @secret = secret
   end
 
-  def self.setup
-    @configuration ||= Configuration.new
-    yield( configuration )
-  end
-
-  class Configuration
-    attr_accessor :key, :secret
-
-    def intialize
-      @key    = ''
-      @secret = ''
-    end
-  end
-
-  def self.get_all_daily_exchange_rates( currency_pair )
+  def get_all_daily_exchange_rates( currency_pair )
     res = get 'returnChartData', currencyPair: currency_pair, period: 86400,  start: 0, :end => Time.now.to_i
   end
 
-  def self.ticker
+  def ticker
     get 'returnTicker'
   end
 
-  def self.volume
+  def volume
     get 'return24hVolume'
   end
 
-  def self.order_book( currency_pair )
+  def order_book( currency_pair )
     get 'returnOrderBook', currencyPair: currency_pair
   end
 
-  def self.loan_orders( currency = 'BTC' )
+  def loan_orders( currency = 'BTC' )
     get 'returnLoanOrders', currency: currency
   end
 
-  def self.active_loans
+  def active_loans
     post 'returnActiveLoans'
   end
 
-  def self.loan_offers
+  def loan_offers
     post 'returnOpenLoanOffers'
   end
 
-  def self.create_loan_offer( currency: 'BTC', amount: , duration: , auto_renew: , rate: )
+  def create_loan_offer( currency: 'BTC', amount: , duration: , auto_renew: true, rate: )
     post 'createLoanOffer',
       currency: currency, amount: amount,
       duration: duration, autoRenew: auto_renew,
       lendingRate: rate
   end
 
-  def self.balances
+  def balances
     post 'returnBalances'
   end
 
-  def self.lending_history( start = 0, end_time = Time.now.to_i )
+  def lending_history( start = 0, end_time = Time.now.to_i )
     post 'returnLendingHistory', start: start, :end => end_time
   end
 
-  def self.currencies
+  def currencies
     get 'returnCurrencies'
   end
 
-  def self.complete_balances
+  def complete_balances
     post 'returnCompleteBalances'
   end
 
-  def self.open_orders( currency_pair )
+  def open_orders( currency_pair )
     post 'returnOpenOrders', currencyPair: currency_pair
   end
 
-  def self.trade_history( currency_pair, start = 0, end_time = Time.now.to_i )
+  def trade_history( currency_pair, start = 0, end_time = Time.now.to_i )
     post 'returnTradeHistory', currencyPair: currency_pair, start: start, :end => end_time
   end
 
-  def self.buy( currency_pair, rate, amount )
+  def buy( currency_pair, rate, amount )
     post 'buy', currencyPair: currency_pair, rate: rate, amount: amount
   end
 
-  def self.sell( currency_pair, rate, amount )
+  def sell( currency_pair, rate, amount )
     post 'sell', currencyPair: currency_pair, rate: rate, amount: amount
   end
 
-  def self.cancel_order( currency_pair, order_number )
+  def cancel_order( currency_pair, order_number )
     post 'cancelOrder', currencyPair: currency_pair, orderNumber: order_number
   end
 
-  def self.move_order( order_number, rate )
+  def move_order( order_number, rate )
     post 'moveOrder', orderNumber: order_number, rate: rate
   end
 
-  def self.withdraw( currency, amount, address )
+  def withdraw( currency, amount, address )
     post 'widthdraw', currency: currency, amount: amount, address: address
   end
 
-  def self.available_account_balances
+  def available_account_balances
     post 'returnAvailableAccountBalances'
   end
 
-  def self.tradable_balances
+  def tradable_balances
     post 'returnTradableBalances'
   end
 
-  def self.transfer_balance( currency, amount, from_ccount, to_account )
+  def transfer_balance( currency, amount, from_ccount, to_account )
     post 'transferBalance', currency: currency, amount: amount, fromAccount: from_ccount, toAccount: to_account
   end
 
-  def self.margin_account_summary
+  def margin_account_summary
     post 'returnMarginAccountSummary'
   end
 
-  def self.margin_buy(currency_pair, rate, amount)
+  def margin_buy(currency_pair, rate, amount)
     post 'marginBuy', currencyPair: currency_pair, rate: rate, amount: amount
   end
 
-  def self.margin_sell(currency_pair, rate, amount)
+  def margin_sell(currency_pair, rate, amount)
     post 'marginSell', currencyPair: currency_pair, rate: rate, amount: amount
   end
 
-  def self.deposit_addresses
+  def deposit_addresses
     post 'returnDepositAddresses'
   end
 
-  def self.generate_new_address( currency )
+  def generate_new_address( currency )
     post 'generateNewAddress', currency: currency
   end
 
-  def self.deposits_withdrawls( start = 0, end_time = Time.now.to_i )
+  def deposits_withdrawls( start = 0, end_time = Time.now.to_i )
     post 'returnDepositsWithdrawals', start: start, :end => end_time
   end
 
   protected
 
-  def self.resource
+  def resource
     @@resouce ||= RestClient::Resource.new( 'https://www.poloniex.com' )
   end
 
-  def self.get( command, params = {} )
+  def get( command, params = {} )
     params[:command] = command
     resource[ 'public' ].get params: params
   end
 
-  def self.post( command, params = {} )
+  def post( command, params = {} )
     params[:command] = command
     params[:nonce]   = (Time.now.to_f * 10000000).to_i
-    resource[ 'tradingApi' ].post params, { Key: configuration.key , Sign: create_sign( params ) }
+    resource[ 'tradingApi' ].post params, { Key: @key , Sign: create_sign( params ) }
   end
 
-  def self.create_sign( data )
+  def create_sign( data )
     encoded_data = Addressable::URI.form_encode( data )
-    OpenSSL::HMAC.hexdigest( 'sha512', configuration.secret , encoded_data )
+    OpenSSL::HMAC.hexdigest( 'sha512', @secret , encoded_data )
   end
 
 end
