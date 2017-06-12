@@ -3,7 +3,7 @@ require 'rest-client'
 require 'openssl'
 require 'addressable/uri'
 
-module Poloniex
+class Poloniex
 
   # class << self
   #   attr_accessor :configuration
